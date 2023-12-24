@@ -1,47 +1,74 @@
-# goals_tracker
+# Goal Tracker
 
-Welcome to your first Azle project! This example project will help you to deploy your first canister (application) to the Internet Computer (IC) decentralized cloud. It is a simple getter/setter canister. You can always refer to [The Azle Book](https://demergent-labs.github.io/azle/) for more in-depth documentation.
+The Goal Tracker project is a decentralized application (dApp) built on the [Azle](https://azle.io/) framework, designed to help users set, track, and manage their goals and associated milestones. The application leverages the Internet Computer (IC) technology, providing a secure and scalable platform for goal management.
 
-`dfx` is the tool you will use to interact with the IC locally and on mainnet. If you don't already have it installed:
+## Table of Contents
 
-```bash
-npm run dfx_install
-```
+- [Introduction](#introduction)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Contributing](#contributing)
+- [License](#license)
 
-Next you will want to start a replica, which is a local instance of the IC that you can deploy your canisters to:
+## Introduction
 
-```bash
-npm run replica_start
-```
+The Goal Tracker dApp serves as a comprehensive tool for users to manage their goals and milestones in a decentralized environment. Users can create, update, and delete goals, associate milestones with goals, and perform various operations such as marking milestones as completed or incomplete. The project is built on Azle, offering a robust and secure foundation for decentralized applications.
 
-If you ever want to stop the replica:
+## Features
 
-```bash
-npm run replica_stop
-```
+- **Goal CRUD Operations:** Create, read, update, and delete goals.
+- **Milestone CRUD Operations:** Create, read, update, and delete milestones.
+- **Search:** Search for goals and milestones based on keywords.
+- **Association:** Associate milestones with goals and vice versa.
+- **User-specific Operations:** Retrieve goals and milestones specific to a user.
+- **Completion Tracking:** Mark milestones as completed or incomplete.
 
-Now you can deploy your canister locally:
+## Getting Started
 
-```bash
-npm install
-npm run canister_deploy_local
-```
+### Prerequisites
 
-To call the methods on your canister:
+Before running the Goal Tracker dApp, ensure you have the following installed:
 
-```bash
-npm run canister_call_get_message
-npm run canister_call_set_message
-```
+- [Node.js](https://nodejs.org/) (version 14 or higher)
+- [Internet Computer SDK](https://sdk.dfinity.org/docs/download.html)
 
-If you run the above commands and then call `npm run canister_call_get_message` you should see:
+### Installation
 
-```bash
-("Hello world!")
-```
+1. **Clone the Repository:**
 
-Assuming you have [created a cycles wallet](https://internetcomputer.org/docs/current/developer-docs/quickstart/network-quickstart) and funded it with cycles, you can deploy to mainnet like this:
+   ```bash
+   git clone https://github.com/your-username/goal-tracker.git
+   cd goal-tracker
+   ```
 
-```bash
-npm run canister_deploy_mainnet
-```
+2. **Install Dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Build the Project:**
+
+   ```bash
+   dfx start
+   ```
+
+4. **Deploy to Internet Computer:** - Open a new terminal and run:
+
+   ```bash
+   dfx deploy
+   ```
+
+
+
+## Contributing
+
+We welcome contributions to enhance and improve the Goal Tracker project.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.md)
+
+---
