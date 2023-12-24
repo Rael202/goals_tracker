@@ -1,0 +1,57 @@
+type Goal = record {
+  id : text;
+  title : text;
+  updated_at : opt nat64;
+  owner : principal;
+  description : text;
+  created_at : nat64;
+  progress : float64;
+  targetDate : text;
+  startDate : text;
+  milestones : vec Milestone;
+};
+type GoalPayload = record {
+  title : text;
+  description : text;
+  targetDate : text;
+  startDate : text;
+};
+type Milestone = record {
+  id : text;
+  title : text;
+  updated_at : opt nat64;
+  isCompleted : bool;
+  goalId : text;
+  description : text;
+  created_at : nat64;
+  targetDate : text;
+};
+type MilestonePayload = record {
+  title : text;
+  description : text;
+  targetDate : text;
+};
+type _AzleResult = variant { Ok : Goal; Err : text };
+type _AzleResult_1 = variant { Ok : Milestone; Err : text };
+type _AzleResult_2 = variant { Ok : vec Milestone; Err : text };
+type _AzleResult_3 = variant { Ok : vec Goal; Err : text };
+service : () -> {
+  addGoal : (GoalPayload) -> (_AzleResult);
+  addMilestone : (text, MilestonePayload) -> (_AzleResult_1);
+  deleteGoal : (text) -> (_AzleResult);
+  deleteMilestone : (text) -> (_AzleResult_1);
+  getGoal : (text) -> (_AzleResult) query;
+  getGoals : () -> (vec Goal) query;
+  getGoalsByUser : (principal) -> (vec Goal) query;
+  getMilestone : (text) -> (_AzleResult_1) query;
+  getMilestones : () -> (vec Milestone) query;
+  getMilestonesByGoal : (text) -> (_AzleResult_2) query;
+  insertMilestoneIntoGoal : (text, text) -> (_AzleResult);
+  markMilestoneAsCompleted : (text) -> (_AzleResult_1);
+  markMilestoneAsIncomplete : (text) -> (_AzleResult_1);
+  removeMilestoneFromGoal : (text, text) -> (_AzleResult);
+  searchGoal : (text) -> (_AzleResult_3) query;
+  searchMilestone : (text) -> (_AzleResult_2) query;
+  updateGoal : (text, GoalPayload) -> (_AzleResult);
+  updateMilestone : (text, MilestonePayload) -> (_AzleResult_1);
+}

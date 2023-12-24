@@ -1,0 +1,15 @@
+{
+    "canisters": {
+        "goals_tracker": {
+            "type": "custom",
+            "main": "src/index.ts",
+            "ts": "src/index.ts",
+            "root": "src",
+            "candid": "src/index.did",
+            "build": "npx azle goals_tracker",
+            "wasm": ".azle/goals_tracker/goals_tracker.wasm",
+            "gzip": true
+        }
+    }
+}
+
