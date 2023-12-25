@@ -1,52 +1,61 @@
-import { $query, $update, Record, StableBTreeMap, Vec, match, Result, nat64, ic, Opt, Principal, float64,} from 'azle';
+import {
+    $query,
+    $update,
+    Record,
+    StableBTreeMap,
+    Vec,
+    match,
+    Result,
+    nat64,
+    ic,
+    Opt,
+    Principal,
+    float64,
+} from 'azle';
 import { v4 as uuidv4 } from 'uuid';
- 
+
 type Goal = Record<{
-    owner: Principal,
-    id: string,
-    title: string; // Name of the goal
-    description: string; // Detailed description of the goal
-    startDate: string; // Date when the goal was started
-    targetDate: string; // Target date for completion
-    progress: number; // Percentage of completion (0-100)
-    milestones: Vec<Milestone> // Array of milestones associated with the goal
-    created_at: nat64,
-    updated_at: Opt<nat64>,
+    owner: Principal;
+    id: string;
+    title: string;
+    description: string;
+    startDate: string;
+    targetDate: string;
+    progress: float64; // Changed to float64 for progress
+    milestones: Vec<Milestone>;
+    created_at: nat64;
+    updated_at: Opt<nat64>;
 }>;
 
-
 type Milestone = Record<{
-    id: string; // Unique identifier
-    goalId: string; // ID of the parent goal
-    title: string; // Name of the milestone
-    description: string; // Detailed description of the milestone
-    targetDate: string; // Target date for completion
-    isCompleted: boolean; // Indicates whether the milestone is completed
-    created_at: nat64,
-    updated_at: Opt<nat64>,
+    id: string;
+    goalId: string;
+    title: string;
+    description: string;
+    targetDate: string;
+    isCompleted: boolean;
+    created_at: nat64;
+    updated_at: Opt<nat64>;
 }>;
 
 type GoalPayload = Record<{
-    title: string; // Name of the goal
-    description: string; // Detailed description of the goal
-    startDate: string; // Date when the goal was started
-    targetDate: string; // Target date for completion
+    title: string;
+    description: string;
+    startDate: string;
+    targetDate: string;
 }>;
 
 type MilestonePayload = Record<{
-    title: string; // Name of the milestone
-    description: string; // Detailed description of the milestone
-    targetDate: string; // Target date for completion
+    title: string;
+    description: string;
+    targetDate: string;
 }>;
 
 const goalStorage = new StableBTreeMap<string, Goal>(0, 44, 512);
 const milestoneStorage = new StableBTreeMap<string, Milestone>(1, 44, 512);
 
-// Goal CRUD
-// Create a new goal
 $update
 export function addGoal(payload: GoalPayload): Result<Goal, string> {
-    /// validate payload here
     if (!payload.title || !payload.description || !payload.startDate || !payload.targetDate) {
         return Result.Err<Goal, string>('Missing or invalid input data');
     }
@@ -59,7 +68,7 @@ export function addGoal(payload: GoalPayload): Result<Goal, string> {
             description: payload.description,
             startDate: payload.startDate,
             targetDate: payload.targetDate,
-            progress: 0,
+            progress: 0.0, // Initialize progress as float64
             milestones: [],
             created_at: ic.time(),
             updated_at: Opt.None,
@@ -67,17 +76,15 @@ export function addGoal(payload: GoalPayload): Result<Goal, string> {
         goalStorage.insert(newGoal.id, newGoal);
         return Result.Ok<Goal, string>(newGoal);
     } catch (err) {
-        return Result.Err<Goal, string>("Issue Found when creating the goal");
+        return Result.Err<Goal, string>('Issue found when creating the goal');
     }
 }
 
-// Update an existing goal
 $update
 export function updateGoal(id: string, payload: GoalPayload): Result<Goal, string> {
     return match(goalStorage.get(id), {
         Some: (goal) => {
-            // Authorization Check
-            if (goal.owner.toString() !== ic.caller().toString()) {
+            if (!arePrincipalsEqual(goal.owner, ic.caller())) {
                 return Result.Err<Goal, string>('You are not authorized to access Goal');
             }
             const updatedGoal: Goal = { ...goal, ...payload, updated_at: Opt.Some(ic.time()) };
@@ -88,14 +95,11 @@ export function updateGoal(id: string, payload: GoalPayload): Result<Goal, strin
     });
 }
 
-
-// Delete an existing goal
 $update
 export function deleteGoal(id: string): Result<Goal, string> {
     return match(goalStorage.get(id), {
         Some: (goal) => {
-            // Authorization Check
-            if (goal.owner.toString() !== ic.caller().toString()) {
+            if (!arePrincipalsEqual(goal.owner, ic.caller())) {
                 return Result.Err<Goal, string>('You are not authorized to access Goal');
             }
             goalStorage.remove(id);
@@ -105,13 +109,11 @@ export function deleteGoal(id: string): Result<Goal, string> {
     });
 }
 
-// Get a goal by id
 $query
 export function getGoal(id: string): Result<Goal, string> {
     return match(goalStorage.get(id), {
         Some: (goal) => {
-            // Authorization Check
-            if (goal.owner.toString() !== ic.caller().toString()) {
+            if (!arePrincipalsEqual(goal.owner, ic.caller())) {
                 return Result.Err<Goal, string>('You are not authorized to access Goal');
             }
             return Result.Ok<Goal, string>(goal);
@@ -120,14 +122,12 @@ export function getGoal(id: string): Result<Goal, string> {
     });
 }
 
-// Get all goals
 $query
 export function getGoals(): Vec<Goal> {
     const goals = goalStorage.values();
     return goals;
 }
 
-// search goal
 $query
 export function searchGoal(searchInput: string): Result<Vec<Goal>, string> {
     const lowerCaseSearchInput = searchInput.toLowerCase();
@@ -143,11 +143,8 @@ export function searchGoal(searchInput: string): Result<Vec<Goal>, string> {
     }
 }
 
-// Milestone CRUD
-// Create a new milestone
 $update
 export function addMilestone(goalId: string, payload: MilestonePayload): Result<Milestone, string> {
-    /// validate payload here
     if (!payload.title || !payload.description || !payload.targetDate) {
         return Result.Err<Milestone, string>('Missing or invalid input data');
     }
@@ -166,11 +163,10 @@ export function addMilestone(goalId: string, payload: MilestonePayload): Result<
         milestoneStorage.insert(newMilestone.id, newMilestone);
         return Result.Ok<Milestone, string>(newMilestone);
     } catch (err) {
-        return Result.Err<Milestone, string>("Issue Found when creating the milestone");
+        return Result.Err<Milestone, string>('Issue found when creating the milestone');
     }
 }
 
-// Update an existing milestone
 $update
 export function updateMilestone(id: string, payload: MilestonePayload): Result<Milestone, string> {
     return match(milestoneStorage.get(id), {
@@ -179,16 +175,14 @@ export function updateMilestone(id: string, payload: MilestonePayload): Result<M
             milestoneStorage.insert(milestone.id, updatedMilestone);
             return Result.Ok<Milestone, string>(updatedMilestone);
         },
-        None: () => Result.Err<Milestone, string>(`Milestone with id:${id} not found`),
+                  None: () => Result.Err<Milestone, string>(`Milestone with id:${id} not found`),
     });
 }
 
-// Delete an existing milestone
 $update
 export function deleteMilestone(id: string): Result<Milestone, string> {
     return match(milestoneStorage.get(id), {
         Some: (milestone) => {
-            // Authorization Check
             if (milestone.goalId.toString() !== ic.caller().toString()) {
                 return Result.Err<Milestone, string>('You are not authorized to access Milestone');
             }
@@ -199,12 +193,10 @@ export function deleteMilestone(id: string): Result<Milestone, string> {
     });
 }
 
-// Get a milestone by id
 $query
 export function getMilestone(id: string): Result<Milestone, string> {
     return match(milestoneStorage.get(id), {
         Some: (milestone) => {
-            // Authorization Check
             if (milestone.goalId.toString() !== ic.caller().toString()) {
                 return Result.Err<Milestone, string>('You are not authorized to access Milestone');
             }
@@ -214,14 +206,12 @@ export function getMilestone(id: string): Result<Milestone, string> {
     });
 }
 
-// Get all milestones
 $query
 export function getMilestones(): Vec<Milestone> {
     const milestones = milestoneStorage.values();
     return milestones;
 }
 
-// search milestone
 $query
 export function searchMilestone(searchInput: string): Result<Vec<Milestone>, string> {
     const lowerCaseSearchInput = searchInput.toLowerCase();
@@ -237,20 +227,21 @@ export function searchMilestone(searchInput: string): Result<Vec<Milestone>, str
     }
 }
 
-// Get all milestones for a goal
 $query
 export function getMilestonesByGoal(goalId: string): Result<Vec<Milestone>, string> {
     const milestones = milestoneStorage.values().filter((milestone) => milestone.goalId === goalId);
     return Result.Ok(milestones);
 }
 
-// Mark a milestone as completed
 $update
 export function markMilestoneAsCompleted(id: string): Result<Milestone, string> {
     return match(milestoneStorage.get(id), {
         Some: (milestone) => {
-
-            const updatedMilestone: Milestone = { ...milestone, isCompleted: true, updated_at: Opt.Some(ic.time()) };
+            const updatedMilestone: Milestone = {
+                ...milestone,
+                isCompleted: true,
+                updated_at: Opt.Some(ic.time()),
+            };
             milestoneStorage.insert(milestone.id, updatedMilestone);
             return Result.Ok<Milestone, string>(updatedMilestone);
         },
@@ -258,13 +249,15 @@ export function markMilestoneAsCompleted(id: string): Result<Milestone, string> 
     });
 }
 
-// Mark a milestone as incomplete
 $update
 export function markMilestoneAsIncomplete(id: string): Result<Milestone, string> {
     return match(milestoneStorage.get(id), {
         Some: (milestone) => {
-        
-            const updatedMilestone: Milestone = { ...milestone, isCompleted: false, updated_at: Opt.Some(ic.time()) };
+            const updatedMilestone: Milestone = {
+                ...milestone,
+                isCompleted: false,
+                updated_at: Opt.Some(ic.time()),
+            };
             milestoneStorage.insert(milestone.id, updatedMilestone);
             return Result.Ok<Milestone, string>(updatedMilestone);
         },
@@ -272,68 +265,59 @@ export function markMilestoneAsIncomplete(id: string): Result<Milestone, string>
     });
 }
 
-// Get all goals for a user
 $query
 export function getGoalsByUser(owner: Principal): Vec<Goal> {
     const goals = goalStorage.values().filter((goal) => goal.owner === owner);
     return goals;
 }
 
-// insert a milestone into a goal
 $update
 export function insertMilestoneIntoGoal(goalId: string, milestoneId: string): Result<Goal, string> {
     return match(goalStorage.get(goalId), {
-      Some: (goal) => {
-        // Authorization Check
-        if (goal.owner.toString() !== ic.caller().toString()) {
-          return Result.Err<Goal, string>('You are not authorized to access Goal');
-        }
-  
-        return match(milestoneStorage.get(milestoneId), {
-          Some: (milestoneData) => {
-            const updatedGoal: Goal = {
-              ...goal,
-              milestones: [...goal.milestones, milestoneData],
-              updated_at: Opt.Some(ic.time()), // Use ic.time() directly for timestamp
-            };
-            goalStorage.insert(goal.id, updatedGoal);
-            return Result.Ok<Goal, string>(updatedGoal);
-          },
-          None: () => Result.Err<Goal, string>(`Milestone with id:${milestoneId} not found`),
-        });
-      },
-      None: () => Result.Err<Goal, string>(`Goal with id:${goalId} not found`),
-    });
-  }
+        Some: (goal) => {
+            if (!arePrincipalsEqual(goal.owner, ic.caller())) {
+                return Result.Err<Goal, string>('You are not authorized to access Goal');
+            }
 
-// remove a milestone from a goal
+            return match(milestoneStorage.get(milestoneId), {
+                Some: (milestoneData) => {
+                    const updatedGoal: Goal = {
+                        ...goal,
+                        milestones: [...goal.milestones, milestoneData],
+                        updated_at: Opt.Some(ic.time()),
+                    };
+                    goalStorage.insert(goal.id, updatedGoal);
+                    return Result.Ok<Goal, string>(updatedGoal);
+                },
+                None: () => Result.Err<Goal, string>(`Milestone with id:${milestoneId} not found`),
+            });
+        },
+        None: () => Result.Err<Goal, string>(`Goal with id:${goalId} not found`),
+    });
+}
+
 $update
 export function removeMilestoneFromGoal(goalId: string, milestoneId: string): Result<Goal, string> {
     return match(goalStorage.get(goalId), {
-      Some: (goal) => {
-        // Authorization Check
-        if (goal.owner !== ic.caller()) {
-          return Result.Err<Goal, string>('You are not authorized to access Goal');
-        }
-  
-        const updatedGoal: Goal = {
-          ...goal,
-          milestones: goal.milestones.filter((milestone) => milestone.id !== milestoneId),
-          updated_at: Opt.Some(ic.time()), // Use ic.time() directly for timestamp
-        };
-        goalStorage.insert(goal.id, updatedGoal);
-        return Result.Ok<Goal, string>(updatedGoal);
-      },
-      None: () => Result.Err<Goal, string>(`Goal with id:${goalId} not found`),
+        Some: (goal) => {
+            if (goal.owner !== ic.caller()) {
+                return Result.Err<Goal, string>('You are not authorized to access Goal');
+            }
+
+            const updatedGoal: Goal = {
+                ...goal,
+                milestones: goal.milestones.filter((milestone) => milestone.id !== milestoneId),
+                updated_at: Opt.Some(ic.time()),
+            };
+            goalStorage.insert(goal.id, updatedGoal);
+            return Result.Ok<Goal, string>(updatedGoal);
+        },
+        None: () => Result.Err<Goal, string>(`Goal with id:${goalId} not found`),
     });
-  }
-
-
-
+}
 
 // UUID workaround
 globalThis.crypto = {
-    // @ts-ignore
     getRandomValues: () => {
         let array = new Uint8Array(32);
 
@@ -344,6 +328,3 @@ globalThis.crypto = {
         return array;
     },
 };
-
-
-
